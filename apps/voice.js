@@ -1,6 +1,9 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import { Config } from '../utils/config.js'
 import fetch from 'node-fetch'
+import fs from 'node:fs'
+
+const _path = process.cwd() + '/plugins/hanhan-plugin'
 
 export class voice extends plugin {
   constructor () {
@@ -29,6 +32,10 @@ export class voice extends plugin {
         {
           reg: '^#?(绿茶|随机绿茶)$',
           fnc: 'lvcha'
+        },
+        {
+          reg: '^#?(撒娇|随机撒娇)$',
+          fnc: 'sj'
         },
         {
           reg: '^#?语音类菜单$',
@@ -86,7 +93,22 @@ export class voice extends plugin {
 
   // 绿茶语音包
   async lvcha (e) {
-    await this.reply(segment.record('https://api.yujn.cn/api/lvcha.php?'))
+    let path = `${_path}/resources/voice/lucha/`
+    if (!fs.existsSync(path)) return this.e.reply(`未发现本地语音`)
+    const files = fs.readdirSync(path)  
+    path = `${path}${files[Math.floor(Math.random() * files.length)]}`
+    await this.reply(segment.record(path))
+    await this.is_MD(e)
+    return true // 返回true 阻挡消息不再往下
+  }
+
+    // 御姐撒娇语音包
+  async sj (e) {
+    let path = `${_path}/resources/voice/yujie/`
+    if (!fs.existsSync(path)) return this.e.reply(`未发现本地语音`)
+    const files = fs.readdirSync(path)  
+    path = `${path}${files[Math.floor(Math.random() * files.length)]}`
+    await this.reply(segment.record(path))
     await this.is_MD(e)
     return true // 返回true 阻挡消息不再往下
   }
