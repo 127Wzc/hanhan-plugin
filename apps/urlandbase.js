@@ -76,8 +76,8 @@ export class urlAndBase extends plugin {
   // Extracted from Coconut Yenai-Plugin 侵删
   async tl (e) {
     let img = []
+    let source
     if (e.source) {
-      let source
       if (e.isGroup) {
         source = (await e.group.getChatHistory(e.source.seq, 1)).pop()
       } else {
@@ -85,23 +85,43 @@ export class urlAndBase extends plugin {
       }
       for (let i of source.message) {
         if (i.type == 'image') {
-          img.push(i.url)
+          img.push({url: i.url, summary: i.summary})
         }
       }
-    } else {
-      img = e.img
+    } else if(e.getReply){
+      source = await e.getReply()
+      for (let i of source.message) {
+        if (i.type == 'image' || i.type == 'mface') {
+          img.push({url: i.url, summary: i.summary})
+        }
+      }
+    } else{
+      for(let i of e.img){
+        img.push({url: i})
+      }
     }
     let forwardMsgs = []
     if (!img) return e.reply('发送内容里没有图片', true)
     if (img.length >= 2) {
       // 大于两张图片以转发消息发送
       for (let i of img) {
-        forwardMsgs.push([segment.image(i), '直链:', i])
+         let summary = firstImag.summary? firstImag.summary : ""
+        forwardMsgs.push([segment.image(i.url), `直链:${summary}\n`, i])
       }
       let dec = '图链'
       return this.reply(await recallSendForwardMsg(e, forwardMsgs, false, dec))
     } else {
-      await e.reply([segment.image(img[0]), '直链:', img[0]])
+      //构建消息
+      let message = []
+      let firstImag = img[0]
+      if(typeof firstImag === 'string'){
+        message.push(segment.image(firstImag), '直链:\n', firstImag)
+
+      } else if(typeof firstImag === 'object' && firstImag.url){
+        let summary = firstImag.summary? firstImag.summary : ""
+        message.push(segment.image(firstImag.url), `直链:${summary}\n`, firstImag.url)
+      }
+      await e.reply(message)
     }
   }
 
