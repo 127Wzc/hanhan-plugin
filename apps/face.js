@@ -82,7 +82,7 @@ export class diaotu extends plugin {
 
   // 随机柴郡
   async cj (e) {
-    await this.reply(segment.image('http://chaijun.avocado.wiki'))
+    await this.reply(segment.image('https://oiapi.net/API/FunBoxEmoji/Cheshire'))
     return true // 返回true 阻挡消息不再往下
   }
 
