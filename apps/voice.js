@@ -51,20 +51,32 @@ export class voice extends plugin {
 
   // 随机网易云
   async sjwyy (e) {
+    const maxAttempts = 3 // 最大重试次数
+    let attempts = 0 // 当前尝试次数
     let url = 'https://api.yujn.cn/api/sjwyy.php?type=json'
-    let response = await fetch(url) // 调用接口获取数据
-    let result = await response.json()
-    if (result.code != 200) {
-      return e.reply('api寄了')
+
+    while (attempts < maxAttempts) {
+      let response = await fetch(url) // 调用接口获取数据
+      let result = await response.json()
+
+      if (result.code != 200) {
+        return e.reply('api寄了')
+      }
+
+      console.log(result)
+
+      if (result.id) {
+        await this.reply(segment.image(result.img))
+        await this.reply(segment.record(result.url))
+        return // 成功获取到歌曲，结束函数
+      } else {
+        this.reply('随机到vip歌曲了，已自动随机下一首')
+        attempts++ // 增加尝试次数
+      }
     }
-    console.log(result)
-    if (result.id) {
-      await this.reply(segment.image(result.img))
-      await this.reply(segment.record(result.url))
-    } else {
-      this.reply('随机到vip歌曲了，已自动随机下一首')
-      this.sjwyy()
-    }
+
+    // 达到最大重试次数
+    this.reply('已达到最大重试次数，无法获取歌曲。')
   }
 
   // 随机唱鸭

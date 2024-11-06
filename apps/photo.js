@@ -188,6 +188,7 @@ export class photo extends plugin {
           }
         }
       }
+      forwardMsgs.push('原文链接：' + result.url)
       let dec = encode
       return this.reply(await recallSendForwardMsg(e, forwardMsgs, false, dec))
     } else {

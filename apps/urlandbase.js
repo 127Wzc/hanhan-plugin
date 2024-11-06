@@ -143,12 +143,10 @@ export class urlAndBase extends plugin {
         .then((response) => {
           const contentType = response.headers['content-type']
           if (contentType && contentType.includes('application/json')) {
-            console.log(JSON.stringify(response.data, null, 2))
-            e.reply(JSON.stringify(response.data))
+            e.reply(JSON.stringify(response.data, null, 4))
           } else if (contentType && contentType.includes('text/')) {
           // 响应数据是文本类型
-            console.log(response.data)
-            e.reply(response.data)
+            e.reply(JSON.stringify(response.data, null, 4))
           } else {
           // 未知类型或错误
             e.reply('未知类型接口，请确认接口返回类型是json或text')

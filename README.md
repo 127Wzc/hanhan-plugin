@@ -2,10 +2,6 @@
 
 支持Yunzai-Bot、Miao-Yunzai和TRSS-Yunzai（部分支持）
 
-## 交流群
-
-QQ群：461601720
-
 ## 安装
 
 ### Github镜像
