@@ -4,455 +4,183 @@ import HttpsProxyAgent from 'https-proxy-agent'
 import { Config } from '../utils/config.js'
 import fetch from 'node-fetch'
 
-let dec = '查询结果'
-let No_proxy = '未检测到代理！没有代理憨憨做不到啊'
-let No_key = '未检测到key！请前往 https://developer.themoviedb.org/docs 注册账号，使用 #憨憨设置tmdb key= 命令进行设置'
+const MESSAGES = {
+  SEARCHING: '查询中',
+  NO_KEY: '未检测到key！请前往 https://developer.themoviedb.org/docs 注册账号，使用 #憨憨设置tmdb key= 命令进行设置',
+  NO_RESULTS: '未找到相关结果',
+  TITLE: '查询结果'
+}
+
+const API_ENDPOINTS = {
+  TV_SEARCH: 'search/tv',
+  MOVIE_SEARCH: 'search/movie',
+  PERSON_SEARCH: 'search/person',
+  UPCOMING_MOVIES: 'movie/upcoming',
+  NOW_PLAYING: 'movie/now_playing',
+  TRENDING_MOVIE: 'trending/movie/week',
+  TRENDING_TV: 'trending/tv/week'
+}
 
 export class Photo extends plugin {
-  constructor () {
+  constructor() {
     super({
       name: 'tmdb',
       dsc: 'tmdb',
       event: 'message',
       priority: 6,
       rule: [
-        {
-          reg: '^#?搜番(.*)$',
-          fnc: 'Searchoperas'
-        },
-        {
-          reg: '^#?电影未来视$',
-          fnc: 'Futuremovies'
-        },
-        {
-          reg: '^#?搜电影(.*)$',
-          fnc: 'Searchmovies'
-        },
-        {
-          reg: '^#?搜导演(.*)$',
-          fnc: 'person'
-        },
-        {
-          reg: '^#?正在放映的电影$',
-          fnc: 'now_movies'
-        },
-        {
-          reg: '^#?本周电影排行$',
-          fnc: 'trending_movies'
-        },
-        {
-          reg: '^#?本周tv排行$',
-          fnc: 'trending_tv'
-        }
-
+        { reg: '^#?搜番(.*)$', fnc: 'searchTV' },
+        { reg: '^#?电影未来视$', fnc: 'upcomingMovies' },
+        { reg: '^#?搜电影(.*)$', fnc: 'searchMovies' },
+        { reg: '^#?搜导演(.*)$', fnc: 'searchPerson' },
+        { reg: '^#?正在放映的电影$', fnc: 'nowPlayingMovies' },
+        { reg: '^#?本周电影排行$', fnc: 'trendingMovies' },
+        { reg: '^#?本周tv排行$', fnc: 'trendingTV' }
       ]
     })
+    this.initConfig()
+  }
+
+  initConfig() {
     this.key = Config.tmdbkey
     this.proxyUrl = Config.proxyUrl
-    this.r18 = Config.tmdb_r18
-    if (!this.r18) {
-      this.r18 = false
+    this.r18 = Config.tmdb_r18 || false
+    this.baseUrl = 'https://api.themoviedb.org/3'
+    this.imageBaseUrl = 'https://image.tmdb.org/t/p/w500'
+  }
+
+  async fetchTMDBApi(endpoint, params = {}) {
+    if (!this.key) {
+      return { error: MESSAGES.NO_KEY }
+    }
+
+    try {
+      const queryString = new URLSearchParams({
+        language: 'zh-CN',
+        page: '1',
+        include_adult: this.r18,
+        ...params
+      }).toString()
+
+      const url = `${this.baseUrl}/${endpoint}?${queryString}`
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          accept: 'application/json',
+          Authorization: `Bearer ${this.key}`
+        },
+        agent: this.proxyUrl? new HttpsProxyAgent(this.proxyUrl) : null
+      })
+
+      return await response.json()
+    } catch (error) {
+      console.error('API Error:', error)
+      return { error: 'API请求失败' }
     }
   }
 
-  async Searchoperas (e) {
-    let key = this.key
-    let proxyUrl = this.proxyUrl
-    if (!key) {
-      e.reply(No_key)
-      return false
+  formatMessage(item, index, type) {
+    const common = {
+      language: `使用语言: ${item.original_language}`,
+      score: `评分: ${item.vote_average}`,
+      overview: `剧情简介: \n${item.overview}`,
+      index: `-----第${index + 1}部-------`
     }
-    if (!proxyUrl) {
-      e.reply(No_proxy)
-      return false
-    }
-    let msg0 = ['查询中']
-    await this.reply(msg0, true, { recallMsg: e.isGroup ? 3 : 0 })
-    console.log('[用户命令]', e.msg)
-    let msg = e.msg.replace(/^#?搜番/, ' ').trim()
-    msg = msg.split(' ').join('+')
 
-    const url = `https://api.themoviedb.org/3/search/tv?query=${msg}&include_adult=${this.r18}&language=zh-CN&page=1`
-
-    const proxyAgent = new HttpsProxyAgent(proxyUrl)
-
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${key}`
+    const formats = {
+      tv: {
+        title: `中文名: ${item.name}`,
+        originalTitle: `原著名称: ${item.original_name}`,
+        region: `发行地区: ${item.origin_country}`,
+        adult: `是否R-18: ${item.adult}`,
+        date: `发行日期: ${item.first_air_date}`
       },
-      agent: proxyAgent
+      movie: {
+        title: `中文名: ${item.title}`,
+        originalTitle: `原著名称: ${item.original_title}`,
+        date: `上映日期: ${item.release_date}`,
+        adult: `是否R-18: ${item.adult}`
+      },
+      person: {
+        name: `导演名: ${item.name}`,
+        birthday: `出生日期: ${item.birthday || '未知'}`,
+        birthplace: `出生地: ${item.place_of_birth || '未知'}`,
+        works: this.formatWorks(item.known_for)
+      }
     }
 
-    fetch(url, options)
-      .then(res => res.json())
-      .then(async json => {
-        let results = json.results
-        if (results.length == 0) {
-          await this.reply('未找到相关结果')
-          return
-        }
-        await this.reply(`共找到${results.length}信息，资源下寨中`, true)
-        let forwardMsgs = []
-        for (let i = 0; i < results.length; i++) {
-          let show = results[i]
-          let coverUrl = `https://image.tmdb.org/t/p/w500${show.poster_path}`
-          console.log(`[进度${i + 1}/${results.length}]----开始下载图片----`)
-
-          let msg = [
-            segment.image(coverUrl),
-          `-----第${1 + i}部-------\n中文名:${show.name}\n原著名称: ${show.original_name}\n发行地区: ${show.origin_country}\n是否R-18: ${show.adult}\n发行日期: ${show.first_air_date}\n使用语言: ${show.original_language} \n评分: ${show.vote_average}\n剧情简介: \n${show.overview}\n---------------------------\n`
-          ]
-          forwardMsgs.push(...msg)
-        }
-        // 发送转发消息
-        return this.reply(await recallSendForwardMsg(e, forwardMsgs, false, dec))
-      })
-      .catch(err => console.error('Error:' + err))
+    const format = formats[type]
+    return Object.values({ ...common, ...format })
+      .filter(Boolean)
+      .join('\n') + '\n---------------------------\n'
   }
 
-  async Futuremovies (e) {
-    let key = this.key
-    let proxyUrl = this.proxyUrl
-    if (!key) {
-      e.reply(No_key)
-      return false
-    }
-    if (!proxyUrl) {
-      e.reply(No_proxy)
-      return false
-    }
-    let msg0 = ['查询中']
-    await this.reply(msg0, true, { recallMsg: e.isGroup ? 3 : 0 })
-    const url = 'https://api.themoviedb.org/3/movie/upcoming?language=zh-CN&page=1&region=CN'
-    // 创建代理
-    const proxyAgent = new HttpsProxyAgent(proxyUrl)
-
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${key}`
-      },
-      agent: proxyAgent // 设置代理
-    }
-
-    fetch(url, options)
-      .then(res => res.json())
-      .then(async json => {
-        let results = json.results
-        if (results.length == 0) {
-          await this.reply('未找到相关结果')
-          return
-        }
-        await this.reply(`共找到${results.length}电影`, true)
-        let forwardMsgs = []
-        for (let i = 0; i < results.length; i++) {
-          let movie = results[i]
-          console.log(`[进度${i + 1}/${results.length}]`)
-
-          let msg = [
-            segment.image(`https://image.tmdb.org/t/p/w500${movie.poster_path}`),
-          `-----第${1 + i}部-------\n中文名: ${movie.title}\n原著名称: ${movie.original_title}\n计划上映日期: ${movie.release_date}\n使用语言: ${movie.original_language} \n评分: ${movie.vote_average}\n剧情简介: \n${movie.overview}\n--------------------------\n`
-          ]
-          forwardMsgs.push(...msg)
-        }
-        // 发送转发消息
-        return this.reply(await recallSendForwardMsg(e, forwardMsgs, false, dec))
-      })
-      .catch(err => console.error('Error:' + err))
+  formatWorks(works = []) {
+    if (!works.length) return ''
+    return '作品列表:\n' + works.map((work, index) =>
+      `-----代表作${index + 1}-----\n` +
+      `译名: ${work.title}\n` +
+      `原著名称：${work.original_title}\n` +
+      `发行日期：${work.release_date}`
+    ).join('\n')
   }
 
-  async trending_movies (e) {
-    let key = this.key
-    let proxyUrl = this.proxyUrl
-    if (!key) {
-      e.reply(No_key)
+  async handleResults(e, results, type) {
+    if (!results || results.error) {
+      await this.reply(results?.error || MESSAGES.NO_RESULTS)
       return false
     }
-    if (!proxyUrl) {
-      e.reply(No_proxy)
+
+    if (results.length === 0) {
+      await this.reply(MESSAGES.NO_RESULTS)
       return false
     }
-    let msg0 = ['查询中']
-    await this.reply(msg0, true, { recallMsg: e.isGroup ? 3 : 0 })
-    const url = 'https://api.themoviedb.org/3/trending/movie/week?language=zh'
-    // 创建代理
-    const proxyAgent = new HttpsProxyAgent(proxyUrl)
 
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${key}`
-      },
-      agent: proxyAgent // 设置代理
-    }
+    await this.reply(`共找到${results.length}条信息，资源获取中...`, true)
 
-    fetch(url, options)
-      .then(res => res.json())
-      .then(async json => {
-        let results = json.results
-        if (results.length == 0) {
-          await this.reply('未找到相关结果')
-          return
-        }
-        await this.reply(`共找到${results.length}电影，资源下寨中，排名由第一部依次向下`, true)
-        let forwardMsgs = []
-        for (let i = 0; i < results.length; i++) {
-          let movie = results[i]
-          let coverUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-          console.log(`[进度${i + 1}/${results.length}]----开始下载图片----`)
+    const forwardMsgs = results.map((item, index) => [
+      segment.image(`${this.imageBaseUrl}${item.poster_path || item.profile_path}`),
+      this.formatMessage(item, index, type)
+    ]).flat()
 
-          let msg = [
-            segment.image(coverUrl),
-          `-----第${1 + i}部-------\n中文名:${movie.title}\n原著名称: ${movie.original_title}\n上映日期: ${movie.release_date}\n使用语言: ${movie.original_language} \n评分: ${movie.vote_average}\n剧情简介: \n${movie.overview}\n---------------------------\n`
-          ]
-          forwardMsgs.push(...msg)
-        }
-        // 发送转发消息
-        return this.reply(await recallSendForwardMsg(e, forwardMsgs, false, dec))
-      })
-      .catch(err => console.error('Error:' + err))
+    return this.reply(await recallSendForwardMsg(e, forwardMsgs, false, MESSAGES.TITLE))
   }
 
-  async trending_tv (e) {
-    let key = this.key
-    let proxyUrl = this.proxyUrl
-    if (!key) {
-      e.reply(No_key)
-      return false
-    }
-    if (!proxyUrl) {
-      e.reply(No_proxy)
-      return false
-    }
-    let msg0 = ['查询中']
-    await this.reply(msg0, true, { recallMsg: e.isGroup ? 3 : 0 })
-    const url = 'https://api.themoviedb.org/3/trending/tv/week?language=zh'
-    // 创建代理
-    const proxyAgent = new HttpsProxyAgent(proxyUrl)
-
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${key}`
-      },
-      agent: proxyAgent // 设置代理
-    }
-
-    fetch(url, options)
-      .then(res => res.json())
-      .then(async json => {
-        let results = json.results
-        if (results.length == 0) {
-          await this.reply('未找到相关结果')
-          return
-        }
-        await this.reply(`共找到${results.length}电影，资源下寨中，排名由第一部依次向下`, true)
-
-        let forwardMsgs = []
-        for (let i = 0; i < results.length; i++) {
-          let movie = results[i]
-          let coverUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-          console.log(`[进度${i + 1}/${results.length}]----开始下载图片----`)
-
-          let msg = [
-            segment.image(coverUrl),
-          `-----第${1 + i}部-------\n中文名:${movie.name}\n原著名称: ${movie.original_name}\n计划上映日期: ${movie.release_date}\n使用语言: ${movie.original_language} \n评分: ${movie.vote_average}\n剧情简介: \n${movie.overview}\n---------------------------\n`
-          ]
-          forwardMsgs.push(...msg)
-        }
-        // 发送转发消息
-        return this.reply(await recallSendForwardMsg(e, forwardMsgs, false, dec))
-      })
-      .catch(err => console.error('Error:' + err))
+  async execSearch(e, endpoint, params = {}, type) {
+    await this.reply(MESSAGES.SEARCHING, true, { recallMsg: e.isGroup ? 3 : 0 })
+    const data = await this.fetchTMDBApi(endpoint, params)
+    return this.handleResults(e, data.results, type)
   }
 
-  async now_movies (e) {
-    let key = this.key
-    let proxyUrl = this.proxyUrl
-    if (!key) {
-      e.reply(No_key)
-      return false
-    }
-    if (!proxyUrl) {
-      e.reply(No_proxy)
-      return false
-    }
-    let msg0 = ['查询中']
-    await this.reply(msg0, true, { recallMsg: e.isGroup ? 3 : 0 })
-    const url = 'https://api.themoviedb.org/3/movie/now_playing?language=zh&page=1&region=CN'
-    // 创建代理
-    const proxyAgent = new HttpsProxyAgent(proxyUrl)
-
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${key}`
-      },
-      agent: proxyAgent // 设置代理
-    }
-
-    fetch(url, options)
-      .then(res => res.json())
-      .then(async json => {
-        let results = json.results
-        if (results.length == 0) {
-          await this.reply('未找到相关结果')
-          return
-        }
-        await this.reply(`共找到${results.length}电影，资源下寨中`, true)
-
-        let forwardMsgs = []
-        for (let i = 0; i < results.length; i++) {
-          let movie = results[i]
-          let coverUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-          console.log(`[进度${i + 1}/${results.length}]----开始下载图片----`)
-
-          let msg = [
-            segment.image(coverUrl),
-          `-----第${1 + i}部-------\n中文名:${movie.title}\n原著名称: ${movie.original_title}\n上映日期: ${movie.release_date}\n使用语言: ${movie.original_language} \n评分: ${movie.vote_average}\n剧情简介: \n${movie.overview}\n---------------------------\n`
-          ]
-          forwardMsgs.push(...msg)
-        }
-        // 发送转发消息
-        return this.reply(await recallSendForwardMsg(e, forwardMsgs, false, dec))
-      })
-      .catch(err => console.error('Error:' + err))
+  // 各个功能实现
+  async searchTV(e) {
+    const query = e.msg.replace(/^#?搜番/, '').trim()
+    return this.execSearch(e, API_ENDPOINTS.TV_SEARCH, { query }, 'tv')
   }
 
-  async Searchmovies (e) {
-    let key = this.key
-    let proxyUrl = this.proxyUrl
-    if (!key) {
-      e.reply(No_key)
-      return false
-    }
-    if (!proxyUrl) {
-      e.reply(No_proxy)
-      return false
-    }
-    let msg0 = ['查询中']
-    await this.reply(msg0, true, { recallMsg: e.isGroup ? 3 : 0 })
-    console.log('[用户命令]', e.msg)
-    let msg = e.msg.replace(/^#?搜电影/, '').trim()
-    msg = msg.split(' ').join('+')
-
-    const url = `https://api.themoviedb.org/3/search/movie?query=${msg}&include_adult=${this.r18}&language=zh-CN&page=1`
-
-    const proxyAgent = new HttpsProxyAgent(proxyUrl)
-
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${key}`
-      },
-      agent: proxyAgent
-    }
-
-    fetch(url, options)
-      .then(res => res.json())
-      .then(async json => {
-        let results = json.results
-        if (results.length == 0) {
-          await this.reply('未找到相关结果')
-          return
-        }
-        await this.reply(`共找到${results.length}信息，资源下寨中`, true)
-
-        let forwardMsgs = []
-        for (let i = 0; i < results.length; i++) {
-          let show = results[i]
-          let coverUrl = `https://image.tmdb.org/t/p/w500${show.poster_path}`
-          console.log(`[进度${i + 1}/${results.length}]----开始下载图片----`)
-
-          let msg = [
-            segment.image(coverUrl),
-          `-----第${1 + i}部-------\n中文名:${show.title}\n原著名称: ${show.original_title}\n是否R-18: ${show.adult}\n发行日期: ${show.release_date}\n使用语言: ${show.original_language} \n评分: ${show.vote_average}\n剧情简介: \n${show.overview}\n---------------------------\n`
-          ]
-          forwardMsgs.push(...msg)
-        }
-        // 发送转发消息
-        return this.reply(await recallSendForwardMsg(e, forwardMsgs, false, dec))
-      })
-      .catch(err => console.error('Error:' + err))
+  async searchMovies(e) {
+    const query = e.msg.replace(/^#?搜电影/, '').trim()
+    return this.execSearch(e, API_ENDPOINTS.MOVIE_SEARCH, { query }, 'movie')
   }
 
-  async person (e) {
-    let key = this.key
-    let proxyUrl = this.proxyUrl
-    if (!key) {
-      e.reply(No_key)
-      return false
-    }
-    if (!proxyUrl) {
-      e.reply(No_proxy)
-      return false
-    }
-    let msg0 = ['查询中']
-    await this.reply(msg0, true, { recallMsg: e.isGroup ? 3 : 0 })
-    console.log('[用户命令]', e.msg)
-    let msg = e.msg.replace(/^#?搜导演/, '').trim()
-    msg = msg.split(' ').join('+')
+  async searchPerson(e) {
+    const query = e.msg.replace(/^#?搜导演/, '').trim()
+    return this.execSearch(e, API_ENDPOINTS.PERSON_SEARCH, { query }, 'person')
+  }
 
-    const url = `https://api.themoviedb.org/3/search/person?query=${msg}&include_adult=${this.r18}&language=zh-CN&page=1`
+  async upcomingMovies(e) {
+    return this.execSearch(e, API_ENDPOINTS.UPCOMING_MOVIES, { region: 'CN' }, 'movie')
+  }
 
-    const proxyAgent = new HttpsProxyAgent(proxyUrl)
+  async nowPlayingMovies(e) {
+    return this.execSearch(e, API_ENDPOINTS.NOW_PLAYING, { region: 'CN' }, 'movie')
+  }
 
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${key}`
-      },
-      agent: proxyAgent
-    }
+  async trendingMovies(e) {
+    return this.execSearch(e, API_ENDPOINTS.TRENDING_MOVIE, {}, 'movie')
+  }
 
-    fetch(url, options)
-      .then(res => res.json())
-      .then(async json => {
-        let results = json.results
-        if (results.length == 0) {
-          await this.reply('未找到相关结果')
-          return
-        }
-        await this.reply(`共找到${results.length}个导演信息，资源下寨中`, true)
-        let forwardMsgs = []
-        for (let i = 0; i < results.length; i++) {
-          let director = results[i]
-          let coverUrl = `https://image.tmdb.org/t/p/w500${director.profile_path}`
-          console.log(`[进度${i + 1}/${results.length}]----开始下载图片----`)
-          // const filePath = await downloadImage(coverUrl)
-
-          let works = []
-          for (let j = 0; j < director.known_for.length; j++) {
-            let work = director.known_for[j]
-            // let workCoverUrl = `https://image.tmdb.org/t/p/w500${work.poster_path}`;
-            // const workFilePath = await downloadImage(workCoverUrl);
-            works.push(
-            `-----代表作${j + 1}-----`,
-            // segment.image(workCoverUrl),
-            `译名: ${work.title}`,
-            `原著名称：${work.original_title}`,
-            `发行日期：${work.release_date}`,
-            '---------------------------\n'
-            )
-          }
-
-          let msg = [
-            segment.image(coverUrl),
-          `导演名: ${director.name}\n出生日期: ${director.birthday}\n出生地: ${director.place_of_birth}\n作品列表:\n${works.join('\n')}`
-          ]
-          forwardMsgs.push(...msg)
-        }
-        // 发送转发消息
-        return this.reply(await recallSendForwardMsg(e, forwardMsgs, false, dec))
-      })
-      .catch(err => console.error('Error:' + err))
+  async trendingTV(e) {
+    return this.execSearch(e, API_ENDPOINTS.TRENDING_TV, {}, 'tv')
   }
 }
