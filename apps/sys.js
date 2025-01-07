@@ -809,3 +809,138 @@ export class sys extends plugin {
     }
   }
 }
+
+
+
+
+// import plugin from '../../../lib/plugins/plugin.js'
+// import { Config } from '../utils/config.js'
+// import puppeteer from 'puppeteer'
+// import path from 'path'
+
+// // 搜索引擎配置
+// const SEARCH_ENGINES = {
+//   GOOGLE: {
+//     name: 'google',
+//     url: 'https://www.google.com/search?q=',
+//     needProxy: true
+//   },
+//   BAIDU: {
+//     name: 'baidu',
+//     url: 'https://www.baidu.com/s?wd=',
+//     needProxy: false
+//   }
+//   // ... 其他搜索引擎配置
+// }
+
+// export class SearchEngine extends plugin {
+//   constructor() {
+//     super({
+//       name: '多搜索引擎',
+//       dsc: '支持多个搜索引擎搜索',
+//       event: 'message',
+//       priority: 50,
+//       rule: [
+//         {
+//           reg: '^#(\\w+)(=|＝)(.*)$',
+//           fnc: 'handleSearch'
+//         }
+//       ]
+//     })
+    
+//     // 配置初始化
+//     this.config = {
+//       proxyUrl: Config.proxyUrl,
+//       chromeF: Config.chromeF,
+//       echo: Config.sysecho,
+//       noie: Config.noie,
+//       echo1: Config.sysecho0,
+//       gqjt: Config.sysgqjt,
+//       screenshotPath: path.join(process.cwd(), 'plugins/hanhan-plugin/resources/ls/screenshot.png')
+//     }
+//   }
+
+//   // 统一搜索处理
+//   async handleSearch(e) {
+//     const [engine, query] = this.parseCommand(e.msg)
+//     if(!SEARCH_ENGINES[engine]) {
+//       return await this.reply('不支持的搜索引擎')
+//     }
+
+//     try {
+//       await this.reply(this.config.echo)
+//       logger.info('[用户命令]', e.msg)
+      
+//       const engineConfig = SEARCH_ENGINES[engine]
+//       const url = engineConfig.url + encodeURIComponent(query)
+      
+//       await this.takeScreenshot(e, {
+//         url,
+//         needProxy: engineConfig.needProxy,
+//         viewport: engineConfig.viewport
+//       })
+//     } catch(error) {
+//       logger.error(error)
+//       await this.reply(this.config.echo1) 
+//     }
+//   }
+
+//   // 截图核心逻辑
+//   async takeScreenshot(e, options) {
+//     const { url, needProxy, viewport = {} } = options
+    
+//     const browser = await puppeteer.launch({
+//       headless: this.config.noie,
+//       executablePath: this.config.chromeF,
+//       args: this.getBrowserArgs(needProxy)
+//     })
+
+//     try {
+//       const page = await browser.newPage()
+//       await page.setViewport({
+//         width: viewport.width || 740,
+//         height: viewport.height || 300,
+//         deviceScaleFactor: this.config.gqjt
+//       })
+
+//       await page.goto(url, { waitUntil: 'networkidle2' })
+//       await this.sleep(5000)
+
+//       await page.screenshot({
+//         path: this.config.screenshotPath,
+//         fullPage: viewport.fullPage || true
+//       })
+
+//       await browser.close()
+      
+//       await this.reply(segment.image(`file://${this.config.screenshotPath}`))
+//     } catch(error) {
+//       await browser.close()
+//       throw error
+//     }
+//   }
+
+//   // 工具方法
+//   parseCommand(msg) {
+//     const match = msg.match(/^#(\w+)(=|＝)(.*)$/)
+//     return [match[1].toUpperCase(), match[3].trim()]
+//   }
+
+//   getBrowserArgs(needProxy) {
+//     const args = [
+//       '--disable-gpu',
+//       '--disable-dev-shm-usage',
+//       '--disable-setuid-sandbox',
+//       '--no-sandbox',
+//       '--disable-web-security'
+//     ]
+//     if(needProxy) {
+//       args.push(`--proxy-server=${this.config.proxyUrl}`) 
+//     }
+//     return args
+//   }
+
+//   sleep(ms) {
+//     return new Promise(resolve => setTimeout(resolve, ms))
+//   }
+// }
