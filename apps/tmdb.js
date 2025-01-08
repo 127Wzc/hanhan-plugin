@@ -69,7 +69,7 @@ export class Photo extends plugin {
           accept: 'application/json',
           Authorization: `Bearer ${this.key}`
         },
-        agent: this.proxyUrl? new HttpsProxyAgent(this.proxyUrl) : null
+        agent: this.proxyUrl ? new HttpsProxyAgent(this.proxyUrl) : null
       })
 
       return await response.json()
@@ -93,35 +93,68 @@ export class Photo extends plugin {
         originalTitle: `原著名称: ${item.original_name}`,
         region: `发行地区: ${item.origin_country}`,
         adult: `是否R-18: ${item.adult}`,
-        date: `发行日期: ${item.first_air_date}`
+        date: `发行日期: ${item.first_air_date}`,
+        poster: item.poster_path
       },
       movie: {
         title: `中文名: ${item.title}`,
         originalTitle: `原著名称: ${item.original_title}`,
         date: `上映日期: ${item.release_date}`,
-        adult: `是否R-18: ${item.adult}`
+        adult: `是否R-18: ${item.adult}`,
+        poster: item.poster_path
       },
       person: {
         name: `导演名: ${item.name}`,
         birthday: `出生日期: ${item.birthday || '未知'}`,
         birthplace: `出生地: ${item.place_of_birth || '未知'}`,
+        profile: item.profile_path,
         works: this.formatWorks(item.known_for)
       }
     }
 
     const format = formats[type]
-    return Object.values({ ...common, ...format })
-      .filter(Boolean)
-      .join('\n') + '\n---------------------------\n'
+    return {
+      text: Object.entries({ ...common, ...format })
+        .filter(([key, val]) => key !== 'poster' && key !== 'profile' && key !== 'works')
+        .map(([_, val]) => val)
+        .join('\n') + '\n---------------------------\n',
+      images: this.getImages(item, type)
+    }
+  }
+
+  getImages(item, type) {
+    const images = []
+
+    // 添加主图片
+    if (type === 'person') {
+      if (item.profile_path) {
+        images.push(`${this.imageBaseUrl}${item.profile_path}`)
+      }
+    } else {
+      if (item.poster_path) {
+        images.push(`${this.imageBaseUrl}${item.poster_path}`)
+      }
+    }
+
+    // 添加作品图片
+    if (type === 'person' && item.known_for) {
+      item.known_for.forEach(work => {
+        if (work.poster_path) {
+          images.push(`${this.imageBaseUrl}${work.poster_path}`)
+        }
+      })
+    }
+
+    return images
   }
 
   formatWorks(works = []) {
     if (!works.length) return ''
     return '作品列表:\n' + works.map((work, index) =>
       `-----代表作${index + 1}-----\n` +
-      `译名: ${work.title}\n` +
-      `原著名称：${work.original_title}\n` +
-      `发行日期：${work.release_date}`
+      `译名: ${work.title || work.name}\n` +
+      `原著名称：${work.original_title || work.original_name}\n` +
+      `发行日期：${work.release_date || work.first_air_date}`
     ).join('\n')
   }
 
@@ -130,7 +163,6 @@ export class Photo extends plugin {
       await this.reply(results?.error || MESSAGES.NO_RESULTS)
       return false
     }
-
     if (results.length === 0) {
       await this.reply(MESSAGES.NO_RESULTS)
       return false
@@ -138,14 +170,21 @@ export class Photo extends plugin {
 
     await this.reply(`共找到${results.length}条信息，资源获取中...`, true)
 
-    const forwardMsgs = results.map((item, index) => [
-      segment.image(`${this.imageBaseUrl}${item.poster_path || item.profile_path}`),
-      this.formatMessage(item, index, type)
-    ]).flat()
+    const forwardMsgs = []
+    for (let i = 0; i < results.length; i++) {
+      const { text, images } = this.formatMessage(results[i], i, type)
+
+      // 添加所有图片
+      images.forEach(img => {
+        forwardMsgs.push(segment.image(img))
+      })
+
+      // 添加文本信息
+      forwardMsgs.push(text)
+    }
 
     return this.reply(await recallSendForwardMsg(e, forwardMsgs, false, MESSAGES.TITLE))
   }
-
   async execSearch(e, endpoint, params = {}, type) {
     await this.reply(MESSAGES.SEARCHING, true, { recallMsg: e.isGroup ? 3 : 0 })
     const data = await this.fetchTMDBApi(endpoint, params)
