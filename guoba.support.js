@@ -44,12 +44,6 @@ export function supportGuoba () {
           component: 'Input'
         },
         {
-          field: 'noie',
-          label: '无头模式',
-          bottomHelpMessage: '关闭无头模式会真打开浏览器进行截图',
-          component: 'Switch'
-        },
-        {
           field: 'tmdbkey',
           label: 'tmdb key',
           bottomHelpMessage: 'tmdb官网获取的key，请前往https://developer.themoviedb.org/docs 注册账号并将获取到的key配置到这里',
@@ -60,28 +54,6 @@ export function supportGuoba () {
           label: '是否允许TMDB搜索瑟瑟的内容',
           bottomHelpMessage: 'R18，瑟瑟哒咩！',
           component: 'Switch'
-        },
-        {
-          field: 'sysecho',
-          label: '搜一搜搜索提示词',
-          bottomHelpMessage: '个性化搜一搜搜索提示词',
-          component: 'Input'
-        },
-        {
-          field: 'sysecho0',
-          label: '搜一搜搜索error提示词',
-          bottomHelpMessage: '个性化搜一搜搜索error提示词',
-          component: 'Input'
-        },
-        {
-          field: 'sysgqjt',
-          label: '搜一搜截图高清放大倍率',
-          bottomHelpMessage: '数字越大，截图时越清晰，注意不要超过4，因为tx无法发送过大的图片',
-          component: 'InputNumber',
-          componentProps: {
-            min: 1,
-            max: 100
-          }
         },
         {
           field: 'gdkey',

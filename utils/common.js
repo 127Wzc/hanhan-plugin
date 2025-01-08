@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 /* eslint-disable no-undef */
-import puppeteer from 'puppeteer'
 import fs from 'fs'
 import _ from 'lodash'
 export function getRandomLineFromFile (filePath) {
@@ -19,22 +18,6 @@ export function getRandomLineFromFile (filePath) {
 }
 export async function sleep (ms = 1000) {
   await new Promise(resolve => setTimeout(resolve, ms))
-}
-
-export async function downloadImage (coverUrl) {
-  const browser = await puppeteer.launch({ headless: true })
-  const page = await browser.newPage()
-  await page.goto(coverUrl, { waitUntil: 'networkidle0' })
-  const imageSrc = await page.$eval('img', img => img.src)
-  const viewSource = await page.goto(imageSrc)
-  const buffer = await viewSource.buffer()
-  const folderPath = './plugins/hanhan-plugin/resources/tmdb_posters/' // 替换为你想要保存图片的文件夹路径
-  const filePath = `${folderPath}/image_${Date.now()}.png` // 修改文件路径
-  await fs.promises.writeFile(filePath, buffer)
-  await page.close()
-  await browser.close()
-  console.log('----图片下载完成----')
-  return filePath
 }
 
 export async function makeForwardMsg (e, msg = [], dec = '') {
