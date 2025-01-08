@@ -21,7 +21,7 @@ const API_ENDPOINTS = {
   TRENDING_TV: 'trending/tv/week'
 }
 
-export class Photo extends plugin {
+export class TMDBApi extends plugin {
   constructor() {
     super({
       name: 'tmdb',
