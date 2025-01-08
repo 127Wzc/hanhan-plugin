@@ -49,6 +49,12 @@ export class Photo extends plugin {
     this.imageBaseUrl = 'https://image.tmdb.org/t/p/w500'
   }
 
+  /**
+   * 调用 TMDB API
+   * @param {string} endpoint - TMDB API 的终端路径 (例如 "/movie/popular")。
+   * @param {object} params - 附加的查询参数 (默认值为空对象 {})。
+   * @returns {Promise<object>} API 返回的 JSON 数据或错误信息。
+   */
   async fetchTMDBApi(endpoint, params = {}) {
     if (!this.key) {
       return { error: MESSAGES.NO_KEY }
@@ -79,6 +85,13 @@ export class Photo extends plugin {
     }
   }
 
+  /**
+   * 格式化对象为消息内容 (例如电影、电视剧或人物)
+   * @param {object} item - 要格式化的内容对象。
+   * @param {number} index - 对象的索引。
+   * @param {string} type - 对象类型 ("tv", "movie", "person")。
+   * @returns {object} 一个对象，包含拼接的文本信息和图片链接。
+   */
   formatMessage(item, index, type) {
     const common = {
       language: `使用语言: ${item.original_language}`,
@@ -122,6 +135,12 @@ export class Photo extends plugin {
     }
   }
 
+  /**
+   * 获取内容的图片 (如人物头像或电影海报)
+   * @param {object} item - 数据对象 (如电影、电视剧或人物)。
+   * @param {string} type - 数据类型 ("tv", "movie", "person")。
+   * @returns {string[]} 图片链接数组。
+   */
   getImages(item, type) {
     const images = []
 
@@ -148,6 +167,11 @@ export class Photo extends plugin {
     return images
   }
 
+  /**
+   * 格式化人物的作品列表
+   * @param {object[]} works - 作品信息数组。
+   * @returns {string} 格式化后的作品信息。
+   */
   formatWorks(works = []) {
     if (!works.length) return ''
     return '作品列表:\n' + works.map((work, index) =>
@@ -158,6 +182,13 @@ export class Photo extends plugin {
     ).join('\n')
   }
 
+  /**
+   * 处理 API 查询结果并回复
+   * @param {object} e - 消息事件对象。
+   * @param {object[]} results - TMDB API 返回的结果数组。
+   * @param {string} type - 数据类型 ("tv", "movie", "person")。
+   * @returns {Promise<boolean>} 处理是否成功的标志。
+   */
   async handleResults(e, results, type) {
     if (!results || results.error) {
       await this.reply(results?.error || MESSAGES.NO_RESULTS)
