@@ -36,7 +36,7 @@ export class TMDBApi extends plugin {
             // 发送 base64 编码的 GIF
             // const base64Gif = gifBuffer.toString('base64');
             // await e.reply(segment.image(`base64://${base64Gif}`));
-            await e.reply(segment.image(`gifBuffer`));
+            await e.reply(segment.image(gifBuffer));
         } catch (error) {
             console.error('[ERROR] Error capturing GIF:', error);
             await e.reply('GIF 录制失败，请稍后重试。');
