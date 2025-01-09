@@ -44,7 +44,7 @@ export class TFLJ extends plugin {
 function getFfmpegPath() {
     if (process.platform === 'win32') {
         // Windows 路径
-        const ffmpegDir = path.join(process.cwd(), '../utils/ffmpeg');
+        const ffmpegDir = path.join(process.cwd(), './plugins/hanhan-plugin/utils/ffmpeg');
         return path.join(ffmpegDir, 'bin/ffmpeg.exe');
     } else {
         // Linux/Mac 使用系统 ffmpeg

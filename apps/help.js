@@ -15,10 +15,6 @@ export class help extends plugin {
         {
           reg: '^#?(nav|憨憨帮助)$',
           fnc: 'help'
-        },
-        {
-          reg: '^#?搜一搜帮助$',
-          fnc: 'so_help'
         }
       ]
     })
@@ -74,11 +70,6 @@ export class help extends plugin {
     })
   }
 
-  async so_help (e) {
-    /** e.msg 用户的命令消息 */
-    logger.info('[用户命令]', e.msg)
-    await e.runtime.render('hanhan-plugin', '/help/sys.html')
-  }
 
   async reply (message) {
     return await this.e.reply(message, false, { recallMsg: Config.recall_s })
