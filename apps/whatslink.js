@@ -4,6 +4,8 @@ import HttpsProxyAgent from 'https-proxy-agent';
 import { Config } from '../utils/config.js';
 import plugin from '../../../lib/plugins/plugin.js';
 import UserAgent1 from 'user-agents';
+import path from 'path';
+import fs from 'fs';
 
 export class whatslink_Api extends plugin {
     constructor() {
@@ -14,7 +16,7 @@ export class whatslink_Api extends plugin {
             priority: 100,
             rule: [
                 {
-                    reg: '^#?(看|查看)(磁力|BT|bt|ed2k|Ed2k|torrent|Torrent)内容\\s*(.+)$',
+                    reg: '^#?(看|查看)(?:磁力|BT|bt|ed2k|Ed2k|torrent|Torrent)内容\\s*(.+)$',
                     fnc: 'whatslink'
                 }
             ]
@@ -27,10 +29,9 @@ export class whatslink_Api extends plugin {
         this.proxyUrl = Config.proxyUrl
     }
     async whatslink(e) {
-        if (this.linkbt || e.isMaster) return false
         try {
             logger.info('收到命令:', e.msg);
-            const linkMatch = e.msg.match(/^#?(看|查看)(磁力|BT|bt|ed2k|Ed2k|torrent|Torrent)内容\s*(.+)$/);
+            const linkMatch = e.msg.match(/^#?(看|查看)(?:磁力|BT|bt|ed2k|Ed2k|torrent|Torrent)内容\s*(.+)$/);
 
             if (!linkMatch) {
                 await e.reply('未找到有效的链接，请检查你的输入。');
@@ -53,7 +54,7 @@ export class whatslink_Api extends plugin {
 
             const htmlContent = this.constructHtmlContent(data);
             const screenshotBuffer = await this.captureScreenshot(htmlContent);
-            await e.reply(segment.image(`base64://${screenshotBuffer}`), true, { recallMsg: e.isGroup ? 3 : 0 });
+            await e.reply(segment.image(`base64://${screenshotBuffer}`), true, { recallMsg: this.linkbt ? 10 : 0 });
         } catch (error) {
             await e.reply('链接内容查询失败，请稍后重试。');
         }
@@ -102,7 +103,7 @@ export class whatslink_Api extends plugin {
                 <span class="value">${data.file_type}</span>
             </div>
         </div>`;
-    
+
         let htmlContent = `<html>
         <head>
             <style>
@@ -180,10 +181,17 @@ export class whatslink_Api extends plugin {
 
         if (data.screenshots && Array.isArray(data.screenshots)) {
             data.screenshots.forEach((screenshot, index) => {
-                htmlContent += `<img src="${screenshot.screenshot}" alt="image${index + 1}" />`;
+                if (this.linkbt) {
+                    htmlContent += `<img src="${screenshot.screenshot}" alt="image${index + 1}" />`;
+                } else {
+                    const imgPath = path.join(process.cwd(), './plugins/hanhan-plugin/resources/tp-bq/124925716_p0_master1200.jpg');
+                    const imgBuffer = fs.readFileSync(imgPath);
+                    const base64Img = `data:image/jpeg;base64,${imgBuffer.toString('base64')}`;
+                    htmlContent += `<img src="${base64Img}" alt="image${index + 1}" />`;
+                }
             });
         } else {
-            logger.warn('未找到截图数据');
+            logger.warn('未找到图片数据');
         }
 
         htmlContent += `</div></div></body></html>`;
