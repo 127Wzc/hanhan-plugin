@@ -56,6 +56,12 @@ export function supportGuoba () {
           component: 'Switch'
         },
         {
+          field: 'linkbt',
+          label: '是否允许查看BT内容',
+          bottomHelpMessage: '注意无任何过滤',
+          component: 'Switch'
+        },
+        {
           field: 'gdkey',
           label: '高德key',
           bottomHelpMessage: '高德官网获取的key，请前往https://lbs.amap.com/ 注册账号并将获取到的key配置到这里',

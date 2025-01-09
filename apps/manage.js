@@ -4,7 +4,7 @@ import { Config } from '../utils/config.js'
 let No_admin_prompts = '需要主人才能设置捏~'
 
 export class manage extends plugin {
-  constructor () {
+  constructor() {
     super({
       name: '憨憨配置',
       dsc: '憨憨配置',
@@ -22,6 +22,10 @@ export class manage extends plugin {
         {
           reg: '^#(关闭|开启)(tmdb|TMDB)(R18|r18|瑟瑟)$',
           fnc: 'enable_tmdb_r18'
+        },
+        {
+          reg: '^#(关闭|开启)((查看|检索)(bt|BT|种子|磁力)|(bt|BT|种子|磁力)(查看|检索))$',
+          fnc: 'enable_linkbt'
         },
         {
           reg: '^#憨憨设置按钮白名单$',
@@ -47,12 +51,12 @@ export class manage extends plugin {
     })
   }
 
-  async helps (e) {
+  async helps(e) {
     if (e.bot.config?.markdown?.type) { return await e.reply('按钮菜单') }
   }
 
   // 设置PingToken
-  async setPingToken (e) {
+  async setPingToken(e) {
     if (!this.e.isMaster) {
       e.reply(No_admin_prompts)
       return false
@@ -62,7 +66,7 @@ export class manage extends plugin {
     return false
   }
 
-  async savePingToken () {
+  async savePingToken() {
     if (!this.e.msg) return
     let token = this.e.msg
     console.log(token)
@@ -78,7 +82,7 @@ export class manage extends plugin {
   }
 
   // 设置tmdkey
-  async settmdbkey (e) {
+  async settmdbkey(e) {
     if (!this.e.isMaster) {
       e.reply(No_admin_prompts)
       return false
@@ -88,7 +92,7 @@ export class manage extends plugin {
     return false
   }
 
-  async saveTmdbKey () {
+  async saveTmdbKey() {
     if (!this.e.msg) return
     let key = this.e.msg
     console.log(key)
@@ -104,7 +108,7 @@ export class manage extends plugin {
   }
 
   // 关闭开启tmdb瑟瑟
-  async enable_tmdb_r18 (e) {
+  async enable_tmdb_r18(e) {
     if (!this.e.isMaster) {
       e.reply(No_admin_prompts)
       return false
@@ -124,8 +128,29 @@ export class manage extends plugin {
     return false
   }
 
+  // 关闭开启tmdb瑟瑟
+  async enable_linkbt(e) {
+    if (!this.e.isMaster) {
+      e.reply(No_admin_prompts)
+      return false
+    }
+    const reg = /(关闭|开启)/
+    const match = e.msg.match(reg)
+    if (match) {
+      const action = match[1]
+      if (action === '关闭') {
+        Config.linkbt = false // 关闭
+        await this.reply('已启动BT内容发现', true)
+      } else {
+        Config.linkbt = true // 打开
+        await this.reply('已关闭BT内容发现', true)
+      }
+    }
+    return false
+  }
+
   // 设置whitegroup
-  async setwhitegroup (e) {
+  async setwhitegroup(e) {
     if (!this.e.isMaster) {
       e.reply(No_admin_prompts)
       return false
@@ -135,7 +160,7 @@ export class manage extends plugin {
     return false
   }
 
-  async savewhitegroup () {
+  async savewhitegroup() {
     if (!this.e.msg) return
     let key = this.e.msg
     console.log(key)
@@ -157,7 +182,7 @@ export class manage extends plugin {
   }
 
   // 删除whitegroup
-  async delwhitegroup (e) {
+  async delwhitegroup(e) {
     if (!this.e.isMaster) {
       e.reply(No_admin_prompts)
       return false
@@ -167,7 +192,7 @@ export class manage extends plugin {
     return false
   }
 
-  async savedelwhitegroup () {
+  async savedelwhitegroup() {
     if (!this.e.msg) return
     let key = this.e.msg
     console.log(key)
@@ -193,7 +218,7 @@ export class manage extends plugin {
   }
 
   // 开启关闭按钮白名单
-  async enableWhiteGroup (e) {
+  async enableWhiteGroup(e) {
     if (!this.e.isMaster) {
       e.reply(No_admin_prompts)
       return false
@@ -214,7 +239,7 @@ export class manage extends plugin {
   }
 
   // 开启关闭视频
-  async enableVideo (e) {
+  async enableVideo(e) {
     if (!this.e.isMaster) {
       e.reply(No_admin_prompts)
       return false

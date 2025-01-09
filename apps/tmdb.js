@@ -29,10 +29,10 @@ export class TMDBApi extends plugin {
       event: 'message',
       priority: 6,
       rule: [
-        { reg: '^#?搜番(.*)$', fnc: 'searchTV' },
+        { reg: '^#?搜(番|tv|TV|电视剧|电视)(.*)$', fnc: 'searchTV' },
         { reg: '^#?电影未来视$', fnc: 'upcomingMovies' },
         { reg: '^#?搜电影(.*)$', fnc: 'searchMovies' },
-        { reg: '^#?搜导演(.*)$', fnc: 'searchPerson' },
+        { reg: '^#?搜(导演|编导|演员)(.*)$', fnc: 'searchPerson' },
         { reg: '^#?正在放映的电影$', fnc: 'nowPlayingMovies' },
         { reg: '^#?本周电影排行$', fnc: 'trendingMovies' },
         { reg: '^#?本周tv排行$', fnc: 'trendingTV' }
@@ -117,7 +117,7 @@ export class TMDBApi extends plugin {
         poster: item.poster_path
       },
       person: {
-        name: `导演名: ${item.name}`,
+        name: `人员名: ${item.name}`,
         birthday: `出生日期: ${item.birthday || '未知'}`,
         birthplace: `出生地: ${item.place_of_birth || '未知'}`,
         profile: item.profile_path,
@@ -224,7 +224,7 @@ export class TMDBApi extends plugin {
 
   // 各个功能实现
   async searchTV(e) {
-    const query = e.msg.replace(/^#?搜番/, '').trim()
+    const query = e.msg.replace(/^#?搜(番|tv|TV|电视剧|电视)/, '').trim()
     return this.execSearch(e, API_ENDPOINTS.TV_SEARCH, { query }, 'tv')
   }
 
@@ -234,7 +234,7 @@ export class TMDBApi extends plugin {
   }
 
   async searchPerson(e) {
-    const query = e.msg.replace(/^#?搜导演/, '').trim()
+    const query = e.msg.replace(/^#?搜(导演|编导|演员)/, '').trim()
     return this.execSearch(e, API_ENDPOINTS.PERSON_SEARCH, { query }, 'person')
   }
 
