@@ -9,6 +9,7 @@
     "node-fetch": "^3.3.1",
     "pingman": "^2.0.0",
     "proxy-chain": "^2.3.0",
+    "user-agents": "^1.1.413",
     "xmorse": "1.0.0"
   }
 }

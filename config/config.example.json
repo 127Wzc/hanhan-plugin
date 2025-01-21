@@ -4,11 +4,9 @@
   "chromeF": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
   "noie": true,
   "tmdbkey": "",
-  "sysecho": "搜索中...",
-  "sysecho0": "30000ms erorr",
-  "sysgqjt": 1,
   "gdkey": "",
   "tmdb_r18": false,
+  "linkbt": false,
   "recall_s": 0,
   "studyGroups": [
     "123456"
