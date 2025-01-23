@@ -1,8 +1,8 @@
+import { getFfmpegPath } from '../utils/common.js'
 import plugin from '../../../lib/plugins/plugin.js'
 import puppeteer from 'puppeteer';
 import { spawn } from 'child_process';
 import stream from 'stream';
-import path from 'path';
 
 const URL_TEMPLATE = 'https://typhoon.slt.zj.gov.cn/'; // URL 模板
 const TIME_MAP = 8; // 最大录制时间（秒）
@@ -37,18 +37,6 @@ export class TFLJ extends plugin {
             await e.reply('GIF 录制失败，请稍后重试。');
         }
         return true;
-    }
-}
-
-// 获取 ffmpeg 路径的函数
-function getFfmpegPath() {
-    if (process.platform === 'win32') {
-        // Windows 路径
-        const ffmpegDir = path.join(process.cwd(), './plugins/hanhan-plugin/utils/ffmpeg');
-        return path.join(ffmpegDir, 'bin/ffmpeg.exe');
-    } else {
-        // Linux/Mac 使用系统 ffmpeg
-        return 'ffmpeg';
     }
 }
 
