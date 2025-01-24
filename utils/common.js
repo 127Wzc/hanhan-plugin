@@ -2,6 +2,7 @@
 /* eslint-disable no-undef */
 import fs from 'fs'
 import _ from 'lodash'
+import path from 'path'
 export function getRandomLineFromFile(filePath) {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
@@ -173,8 +174,8 @@ export async function getforwardMsg(e, message, {
 export function getFfmpegPath() {
   if (process.platform === 'win32') {
     // Windows 路径
-    const ffmpegDir = join(process.cwd(), './plugins/hanhan-plugin/utils/ffmpeg')
-    return join(ffmpegDir, 'bin/ffmpeg.exe')
+    const ffmpegDir = path.join(process.cwd(), './plugins/hanhan-plugin/utils/ffmpeg')
+    return path.join(ffmpegDir, 'bin/ffmpeg.exe')
   } else {
     // Linux/Mac 使用系统 ffmpeg
     return 'ffmpeg'
