@@ -56,7 +56,7 @@ export class whatslink_Api extends plugin {
             const screenshotBuffer = await this.captureScreenshot(htmlContent);
             await e.reply(segment.image(`base64://${screenshotBuffer}`), true, { recallMsg: this.linkbt ? 10 : 0 });
         } catch (error) {
-            await e.reply('链接内容查询失败，请稍后重试。');
+            await e.reply('链接内容查询失败，请稍后重试；多次出现请尝试使用代理或切换代理。');
             logger.error('查询链接内容失败:', error);
         }
         return true;
