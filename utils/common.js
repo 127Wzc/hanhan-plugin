@@ -2,7 +2,8 @@
 /* eslint-disable no-undef */
 import fs from 'fs'
 import _ from 'lodash'
-export function getRandomLineFromFile (filePath) {
+import path from 'path'
+export function getRandomLineFromFile(filePath) {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
@@ -16,11 +17,11 @@ export function getRandomLineFromFile (filePath) {
     })
   })
 }
-export async function sleep (ms = 1000) {
+export async function sleep(ms = 1000) {
   await new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export async function makeForwardMsg (e, msg = [], dec = '') {
+export async function makeForwardMsg(e, msg = [], dec = '') {
   let nickname = Bot.nickname
   if (e.isGroup) {
     try {
@@ -93,7 +94,7 @@ export async function makeForwardMsg (e, msg = [], dec = '') {
    * @param {Object} [data.anony] - 附加的匿名数据对象
    * @returns {Promise<any>} - Promise 对象，返回函数 `getforwardMsg()` 的返回值
    */
-export async function recallSendForwardMsg (e, msg, data = {}, dec) {
+export async function recallSendForwardMsg(e, msg, data = {}, dec) {
   return await getforwardMsg(e, msg, {
     info: {
       nickname: '小冰',
@@ -123,7 +124,7 @@ export async function recallSendForwardMsg (e, msg, data = {}, dec) {
    * @param {Boolean} [options.shouldSendMsg=true] - 是否直接发送消息，true为直接发送，否则返回需要发送的消息
    * @returns {Promise<import('icqq').MessageRet|import('icqq').XmlElem|import('icqq').JsonElem>} 消息发送结果的Promise对象
    */
-export async function getforwardMsg (e, message, {
+export async function getforwardMsg(e, message, {
   info,
   fkmsg,
   isxml,
@@ -167,4 +168,16 @@ export async function getforwardMsg (e, message, {
     }
   }
   return forwardMsg
+}
+
+// 获取 ffmpeg 路径
+export function getFfmpegPath() {
+  if (process.platform === 'win32') {
+    // Windows 路径
+    const ffmpegDir = path.join(process.cwd(), './plugins/hanhan-plugin/utils/ffmpeg')
+    return path.join(ffmpegDir, 'bin/ffmpeg.exe')
+  } else {
+    // Linux/Mac 使用系统 ffmpeg
+    return 'ffmpeg'
+  }
 }
