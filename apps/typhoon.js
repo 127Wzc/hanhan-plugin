@@ -42,7 +42,9 @@ export class TFLJ extends plugin {
 
 async function captureGif(url, maxDuration, fps, elementSelector) {
     logger.info('启动 Puppeteer 浏览器');
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     const page = await browser.newPage();
 
     logger.info('设置页面视窗大小');
