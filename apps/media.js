@@ -5,6 +5,7 @@ import fs from 'fs'
 import fetch from 'node-fetch'
 import puppeteer from 'puppeteer'
 import path from 'path'
+import https from 'https'
 
 let isInitialized = false
 let cachedApiData = null
@@ -341,7 +342,16 @@ export class media extends plugin {
         const c = new AbortController();
         const t = setTimeout(() => c.abort(), API_CONFIG.TIMEOUT);
         try {
-            const r = await fetch(url, { ...options, signal: c.signal, headers: { 'User-agent': 'yunzai/hanhan-plugin', ...options.headers } });
+            // 创建 HTTPS Agent 以跳过证书验证（用于处理证书过期的情况）
+            const httpsAgent = new https.Agent({
+                rejectUnauthorized: false
+            });
+            const r = await fetch(url, { 
+                ...options, 
+                signal: c.signal, 
+                agent: url.startsWith('https://') ? httpsAgent : options.agent,
+                headers: { 'User-agent': 'yunzai/hanhan-plugin', ...options.headers } 
+            });
             clearTimeout(t);
             return r
         } catch (e) {

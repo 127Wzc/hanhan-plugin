@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { Config } from './config.js'
+import https from 'https';
 
 /**
  * 获取随机背景图片的Data URI
@@ -7,7 +8,16 @@ import { Config } from './config.js'
  */
 export async function getRandomBgImage() {
     try {
-        const response = await fetch(Config.RandomPictureAPI || 'https://ai.ycxom.top:3002/api/v1/wallpaper/by-ratio/square', { timeout: 15000 });
+        const url = Config.RandomPictureAPI || 'https://ai.ycxom.top:3002/api/v1/wallpaper/by-ratio/square';
+        // 创建 HTTPS Agent 以跳过证书验证（用于处理证书过期的情况）
+        const httpsAgent = new https.Agent({
+            rejectUnauthorized: false
+        });
+        const fetchOptions = { timeout: 15000 };
+        if (url.startsWith('https://')) {
+            fetchOptions.agent = httpsAgent;
+        }
+        const response = await fetch(url, fetchOptions);
         if (response.ok) {
             const imageBuffer = await response.arrayBuffer();
             const base64 = Buffer.from(imageBuffer).toString('base64');
