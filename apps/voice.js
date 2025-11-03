@@ -1,9 +1,6 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import { Config } from '../utils/config.js'
 import fetch from 'node-fetch'
-import fs from 'node:fs'
-
-const _path = process.cwd() + '/plugins/hanhan-plugin'
 
 export class voice extends plugin {
   constructor() {
@@ -13,46 +10,24 @@ export class voice extends plugin {
       event: 'message',
       priority: 6,
       rule: [
-        {
-          reg: '^#?(唱鸭|随机唱鸭)$',
-          fnc: 'sjcy'
-        },
-        {
-          reg: '^#?(坤坤语音|随机坤坤)$',
-          fnc: 'sjkk'
-        },
-        {
-          reg: '^#?(网易云|随机网易云)$',
-          fnc: 'sjwyy'
-        },
-        {
-          reg: '^#?骂我$',
-          fnc: 'maren'
-        },
-        {
-          reg: '^#?(绿茶|随机绿茶)$',
-          fnc: 'lvcha'
-        },
-        {
-          reg: '^#?(撒娇|随机撒娇)$',
-          fnc: 'sj'
-        },
-        {
-          reg: '^#?语音类菜单$',
-          fnc: 'helps'
-        }
+        { reg: '^#?(唱鸭|随机唱鸭)$', fnc: 'changya', dsc: '唱鸭' },
+        { reg: '^#?(坤坤语音|随机坤坤)$', fnc: 'kunkun', dsc: '坤坤语音' },
+        { reg: '^#?(网易云|随机网易云)$', fnc: 'wyy', dsc: '随机网易云' },
+        { reg: '^#?骂我$', fnc: 'mawo', dsc: '骂我' },
+        { reg: '^#?(绿茶|随机绿茶)$', fnc: 'lvcha', dsc: '绿茶语音' },
+        { reg: '^#?语音类菜单$', fnc: 'voiceMenu', dsc: '语音类菜单' }
       ]
     })
   }
 
   async helps(e) {
-    if (e.bot.config?.markdown?.type) { 
-      return await this.sendReply('按钮菜单') 
+    if (e.bot.config?.markdown?.type) {
+      return await this.sendReply('按钮菜单')
     }
   }
 
   // 随机网易云
-  async sjwyy(e) {
+  async wyy(e) {
     const maxAttempts = 3 // 最大重试次数
     let attempts = 0 // 当前尝试次数
     let url = 'https://api.yujn.cn/api/sjwyy.php?type=json'
@@ -90,40 +65,23 @@ export class voice extends plugin {
   }
 
   // 随机唱鸭
-  async sjcy() {
+  async changya() {
     return this.handleAudio('http://api.yujn.cn/api/changya.php?type=mp3')
   }
 
   // 随机坤坤
-  async sjkk() {
+  async kunkun() {
     return this.handleAudio('http://api.yujn.cn/api/sjkunkun.php?')
   }
 
   // 随机语音骂人
-  async maren() {
+  async mawo() {
     return this.handleAudio('http://api.yujn.cn/api/maren.php?')
   }
 
   // 绿茶语音包
-  async lvcha (e) {
-    let path = `${_path}/resources/voice/lucha/`
-    if (!fs.existsSync(path)) return this.e.reply(`未发现本地语音`)
-    const files = fs.readdirSync(path)  
-    path = `${path}${files[Math.floor(Math.random() * files.length)]}`
-    await this.reply(segment.record(path))
-    await this.is_MD(e)
-    return true // 返回true 阻挡消息不再往下
-  }
-
-    // 御姐撒娇语音包
-  async sj (e) {
-    let path = `${_path}/resources/voice/yujie/`
-    if (!fs.existsSync(path)) return this.e.reply(`未发现本地语音`)
-    const files = fs.readdirSync(path)  
-    path = `${path}${files[Math.floor(Math.random() * files.length)]}`
-    await this.reply(segment.record(path))
-    await this.is_MD(e)
-    return true // 返回true 阻挡消息不再往下
+  async lvcha() {
+    return this.handleAudio('https://api.yujn.cn/api/lvcha.php?')
   }
 
   // 重命名为sendReply避免与原始reply冲突
@@ -131,14 +89,14 @@ export class voice extends plugin {
     return await this.e.reply(message, false, { recallMsg: Config.recall_s })
   }
 
-  async is_MD(e) {
+  async voiceMenu(e) {
     if (Config.enableButton || false) {
-      if (!(Config.buttonWhiteGroups.includes(e.group_id))) { 
-        return false 
+      if (!(Config.buttonWhiteGroups.includes(e.group_id))) {
+        return false
       }
     }
-    if (e.bot.config?.markdown?.type) { 
-      return await this.sendReply('语音类菜单') 
+    if (e.bot.config?.markdown?.type) {
+      return await this.sendReply('语音类菜单')
     }
   }
 }

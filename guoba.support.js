@@ -1,7 +1,7 @@
 import { Config } from './utils/config.js'
 import path from 'path'
 
-export function supportGuoba () {
+export function supportGuoba() {
   return {
     // 插件信息，将会显示在前端页面
     // 如果你的插件没有在插件库里，那么需要填上补充信息
@@ -44,6 +44,24 @@ export function supportGuoba () {
           component: 'Input'
         },
         {
+          field: 'stop_PicEval',
+          label: '关闭色吗功能',
+          bottomHelpMessage: '关闭色吗功能，呜呜呜',
+          component: 'Switch'
+        },
+        {
+          field: 'PicEvalProxy',
+          label: '启用色吗功能代理',
+          bottomHelpMessage: '国内无法链接，需要启动代理',
+          component: 'Switch'
+        },
+        {
+          field: 'PicEvalReverseProxy',
+          label: '色吗反向代理',
+          bottomHelpMessage: '填写api.websim.com的反向代理地址',
+          component: 'Input'
+        },
+        {
           field: 'tmdbkey',
           label: 'tmdb key',
           bottomHelpMessage: 'tmdb官网获取的key，请前往https://developer.themoviedb.org/docs 注册账号并将获取到的key配置到这里',
@@ -68,6 +86,18 @@ export function supportGuoba () {
           component: 'Input'
         },
         {
+          field: 'video',
+          label: '是否开启视频功能',
+          bottomHelpMessage: '允许发送视频',
+          component: 'Switch'
+        },
+        {
+          field: 'RandomPictureAPI',
+          label: '随机壁纸api',
+          bottomHelpMessage: '菜单等随机壁纸api',
+          component: 'Input'
+        },
+        {
           field: 'studyGroups',
           label: '每日英语分享群组',
           bottomHelpMessage: '填入后将向所填群每天早上自动分享每日英语,群号请使用 , 或 : 分隔开',
@@ -82,11 +112,11 @@ export function supportGuoba () {
 
       ],
       // 获取配置数据方法（用于前端填充显示数据）
-      getConfigData () {
+      getConfigData() {
         return Config
       },
       // 设置配置的方法（前端点确定后调用的方法）
-      setConfigData (data, { Result }) {
+      setConfigData(data, { Result }) {
         for (let [keyPath, value] of Object.entries(data)) {
           if (keyPath === 'studyGroups') { value = value.toString().split(/[,，;；|]/) }
           if (Config[keyPath] !== value) { Config[keyPath] = value }

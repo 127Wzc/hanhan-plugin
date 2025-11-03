@@ -15,5 +15,11 @@
     "123456-ABCDEF123"
   ],
   "enableButton": false,
-  "enableVideo": true
+  "enableVideo": true,
+  "stop_PicEval": false,
+  "PicEvalProxy": true,
+  "PicEvalReverseProxy": "api.websim.com",
+  "RandomPictureAPI": "https://ai.ycxom.top:3002/api/v1/wallpaper/by-ratio/standard",
+  "video": true,
+  "debug": false
 }
