@@ -52,7 +52,7 @@ export class urlAndBase extends plugin {
 
   // 获取图片直链
   async imgLink(e) {
-    let imgUrls = []
+    let imgData = [] // 改为存储 {url, summary} 对象数组
     if (e.source) {
       let sourceMsg
       try {
@@ -63,8 +63,8 @@ export class urlAndBase extends plugin {
         }
         if (sourceMsg) {
           for (const msg of sourceMsg.message) {
-            if (msg.type === 'image') {
-              imgUrls.push(msg.url)
+            if (msg.type === 'image' || msg.type === 'mface') {
+              imgData.push({url: msg.url, summary: msg.summary || ''})
             }
           }
         }
@@ -72,25 +72,43 @@ export class urlAndBase extends plugin {
         logger.error('获取引用消息失败', error)
         return e.reply('获取引用消息失败，可能已被撤回。')
       }
+    } else if (e.getReply) {
+      // 处理回复消息的情况
+      try {
+        const source = await e.getReply()
+        if (source && source.message) {
+          for (const i of source.message) {
+            if (i.type === 'image' || i.type === 'mface') {
+              imgData.push({url: i.url, summary: i.summary || ''})
+            }
+          }
+        }
+      } catch (error) {
+        logger.error('获取回复消息失败', error)
+        return e.reply('获取回复消息失败，可能已被撤回。')
+      }
     } else if (e.img && e.img.length > 0) {
-      imgUrls = e.img
+      // 直接包含的图片，转换为对象数组
+      imgData = e.img.map(url => ({url: url, summary: ''}))
     }
 
-    if (imgUrls.length === 0) {
+    if (imgData.length === 0) {
       return e.reply('发送的内容或引用的消息里没有图片。', true)
     }
 
-    if (imgUrls.length >= 2) {
-      const forwardMsgs = imgUrls.map(url => {
+    if (imgData.length >= 2) {
+      const forwardMsgs = imgData.map(img => {
+        const summaryText = img.summary ? `\n摘要: ${img.summary}` : ''
         return {
-          user_id: this.e.bot.uin,
+          user_id: this.e.bot.uin,  
           nickname: this.e.bot.nickname,
-          message: [segment.image(url), `直链: ${url}`]
+          message: [segment.image(img.url), `直链: ${img.url}${summaryText}`]
         }
       })
       await e.reply(await e.bot.makeForwardMsg(forwardMsgs, '图片链接'))
     } else {
-      await e.reply([segment.image(imgUrls[0]), `直链: ${imgUrls[0]}`])
+      const summaryText = imgData[0].summary ? `\n摘要: ${imgData[0].summary}` : ''
+      await e.reply([segment.image(imgData[0].url), `直链: ${imgData[0].url}${summaryText}`])
     }
   }
 
