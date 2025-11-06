@@ -18,7 +18,7 @@ export class urlAndBase extends plugin {
         { reg: '^#?(base64|Base64)解码', fnc: 'base64Decode', dsc: 'Base64解码' },
         { reg: '^#?访问', fnc: 'visit', dsc: '访问链接' , permission: "master" },
         { reg: '^#发图片', fnc: 'sendImage', dsc: '发送图片' , permission: "master" },
-        { reg: '^#?取?图链', fnc: 'imgLink', dsc: '图片链接' , permission: "master" },
+        { reg: '^#?取?图链', fnc: 'imgLink', dsc: '图片链接' },
         { reg: '^#发视频', fnc: 'sendVideo', dsc: '发送视频' , permission: "master" },
         { reg: '^#发语音', fnc: 'sendRecord', dsc: '发送语音' , permission: "master" }
       ]
@@ -204,3 +204,4 @@ export class urlAndBase extends plugin {
   }
 
 }
+
