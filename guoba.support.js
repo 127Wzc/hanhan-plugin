@@ -44,6 +44,12 @@ export function supportGuoba() {
           component: 'Input'
         },
         {
+          field: 'fuelPriceApi',
+          label: '油价接口地址',
+          bottomHelpMessage: '可直接填写完整地址，例如 https://openapi.dwo.cc/api/fuel-price?ckey=你的ckey&region=湖北 ，查询时会自动按指令改写 region 参数',
+          component: 'Input'
+        },
+        {
           field: 'stop_PicEval',
           label: '关闭色吗功能',
           bottomHelpMessage: '关闭色吗功能，呜呜呜',

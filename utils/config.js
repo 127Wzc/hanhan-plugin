@@ -6,6 +6,7 @@ const defaultConfig = {
   proxyUrl: '',
   chromeF: '',
   noie: true,
+  fuelPriceApi: 'https://openapi.dwo.cc/api/fuel-price?region=湖北',
   tmdbkey: '',
   sysecho: '搜索中...',
   sysecho0: '30000ms erorr',

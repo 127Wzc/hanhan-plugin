@@ -25,6 +25,80 @@ const OIL_PROVINCES = new Set([
   '四川', '河北', '西藏', '河南', '新疆', '黑龙江', '吉林', '云南', '湖北', '浙江', '湖南'
 ])
 
+const OIL_PRICE_LABELS = [
+  { label: '0#柴油', keys: ['p0', 'oil0', 'diesel0', 'oil_0', 'price0', 'price_0', '0#柴油', '0号柴油', '柴油'] },
+  { label: '89#汽油', keys: ['p89', 'oil89', 'gas89', 'oil_89', 'price89', 'price_89', '89#汽油', '89号汽油'] },
+  { label: '92#汽油', keys: ['p92', 'oil92', 'gas92', 'oil_92', 'price92', 'price_92', '92#汽油', '92号汽油'] },
+  { label: '95#汽油', keys: ['p95', 'oil95', 'gas95', 'oil_95', 'price95', 'price_95', '95#汽油', '95号汽油'] },
+  { label: '98#汽油', keys: ['p98', 'oil98', 'gas98', 'oil_98', 'price98', 'price_98', '98#汽油', '98号汽油'] }
+]
+
+function getOilPriceValue(sources, keys) {
+  for (const source of sources) {
+    if (!source || typeof source !== 'object') continue
+    for (const key of keys) {
+      const value = source[key]
+      if (value !== undefined && value !== null && value !== '') {
+        return value
+      }
+    }
+  }
+  return null
+}
+
+function buildFuelPriceUrl(province) {
+  const rawUrl = Config.fuelPriceApi || 'https://openapi.dwo.cc/api/fuel-price?region=湖北'
+  let url
+  try {
+    url = new URL(rawUrl)
+  } catch {
+    url = new URL('https://openapi.dwo.cc/api/fuel-price?region=湖北')
+  }
+  url.searchParams.set('region', province)
+  return url.toString()
+}
+
+function normalizeOilResponse(rawData, province) {
+  const payload = rawData?.data && typeof rawData.data === 'object'
+    ? rawData.data
+    : (typeof rawData === 'object' ? rawData : null)
+
+  if (!payload) return null
+
+  const nestedPrices = payload.prices && typeof payload.prices === 'object' ? payload.prices : null
+  const sources = [payload, nestedPrices].filter(Boolean)
+  const region = getOilPriceValue(sources, ['region', 'province', 'prov', 'name']) || province
+  const updateTime = getOilPriceValue(sources, ['time', 'updateTime', 'update_time', 'updatedAt', 'updated_at', 'date', 'datetime'])
+
+  let prices = []
+
+  if (Array.isArray(payload.items) && payload.items.length) {
+    prices = payload.items
+      .map((item) => {
+        if (!item?.name) return null
+        return `${item.name}：${item.price_desc || item.price || '暂无数据'}`
+      })
+      .filter(Boolean)
+  }
+
+  if (!prices.length) {
+    prices = OIL_PRICE_LABELS
+      .map(({ label, keys }) => {
+        const value = getOilPriceValue(sources, keys)
+        return value !== null ? `${label}：${value}` : null
+      })
+      .filter(Boolean)
+  }
+
+  if (!prices.length) return null
+
+  const lines = [`查询省份：${region}`, ...prices]
+  if (updateTime) {
+    lines.push(`更新时间：${updateTime}`)
+  }
+  return lines.join('\n')
+}
+
 export class text extends plugin {
   constructor() {
     super({
@@ -110,28 +184,24 @@ export class text extends plugin {
       return this.customReply(e, '只支持完整的省份名称查询哦~')
     }
 
-    const url = `https://api.qqsuu.cn/api/dm-oilprice?prov=${encodeURIComponent(province)}`
-    try {
-      const response = await axios.get(url, { timeout: 10000 })
-      const data = response.data
+    const url = buildFuelPriceUrl(province)
+    const parsedUrl = new URL(url)
 
-      if (data.code !== 200) {
-        return this.customReply(e, '查询失败, 可能接口失效了，请联系憨憨~')
+    if (!parsedUrl.searchParams.get('ckey')) {
+      return this.customReply(e, '未配置油价 ckey，请在锅巴的油价接口地址中附带 ckey。申请地址：https://api.dwo.cc/')
+    }
+
+    try {
+      const response = await axios.get(parsedUrl.toString(), { timeout: 10000 })
+      const data = response.data || {}
+      const message = normalizeOilResponse(data, province)
+
+      if (!message) {
+        const apiMessage = data?.msg ? `油价查询失败：${data.msg}` : '油价查询失败，接口返回格式暂不兼容'
+        return this.customReply(e, apiMessage)
       }
 
-      const oilData = data.data
-      const message = [
-        `查询省份：${oilData.prov}`,
-        `0#柴油：${oilData.p0}`,
-        `89#汽油：${oilData.p89}`,
-        `92#汽油：${oilData.p92}`,
-        `95#汽油：${oilData.p95}`,
-        `98#汽油：${oilData.p98}`,
-        `更新时间：${oilData.time}`
-      ].join('\n')
-
       await this.customReply(e, message)
-
     } catch (error) {
       logger.error(`[油价查询] 请求失败:`, error)
       await this.customReply(e, '连接超时，请稍候重试...')

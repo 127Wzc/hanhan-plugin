@@ -3,6 +3,7 @@
   "proxyUrl": "http://127.0.0.1:7890",
   "chromeF": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
   "noie": true,
+  "fuelPriceApi": "https://openapi.dwo.cc/api/fuel-price?region=湖北",
   "tmdbkey": "",
   "gdkey": "",
   "tmdb_r18": false,
