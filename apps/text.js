@@ -58,6 +58,39 @@ function buildFuelPriceUrl(province) {
   return url.toString()
 }
 
+function formatBeijingTime(value) {
+  if (value === undefined || value === null || value === '') return null
+
+  if (typeof value === 'string' && !/^\d+$/.test(value.trim())) {
+    return value
+  }
+
+  const timestamp = Number(value)
+  if (!Number.isFinite(timestamp)) return String(value)
+
+  const date = new Date(String(timestamp).length === 10 ? timestamp * 1000 : timestamp)
+  if (Number.isNaN(date.getTime())) return String(value)
+
+  const formatter = new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
+
+  const parts = Object.fromEntries(
+    formatter.formatToParts(date)
+      .filter(part => part.type !== 'literal')
+      .map(part => [part.type, part.value])
+  )
+
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`
+}
+
 function normalizeOilResponse(rawData, province) {
   const payload = rawData?.data && typeof rawData.data === 'object'
     ? rawData.data
@@ -68,7 +101,9 @@ function normalizeOilResponse(rawData, province) {
   const nestedPrices = payload.prices && typeof payload.prices === 'object' ? payload.prices : null
   const sources = [payload, nestedPrices].filter(Boolean)
   const region = getOilPriceValue(sources, ['region', 'province', 'prov', 'name']) || province
-  const updateTime = getOilPriceValue(sources, ['time', 'updateTime', 'update_time', 'updatedAt', 'updated_at', 'date', 'datetime'])
+  const updateTime = payload.updated || formatBeijingTime(
+    getOilPriceValue(sources, ['time', 'updateTime', 'update_time', 'updatedAt', 'updated_at', 'date', 'datetime'])
+  )
 
   let prices = []
 
